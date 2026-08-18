@@ -1,11 +1,34 @@
-"""Shared helpers for core tests."""
+"""Shared helpers for core tests.
+
+The core is HA-free, but it lives inside the integration package whose ``__init__`` imports
+Home Assistant. When HA is not installed (fast local runs on Windows) we register a stub package
+so ``custom_components.capacity_tariff.core`` imports without executing that ``__init__``.
+"""
 
 from __future__ import annotations
 
+import pathlib
+import sys
+import types
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
+
+try:
+    import homeassistant  # noqa: F401
+except ImportError:  # pragma: no cover - only on machines without HA
+    _pkg = "custom_components.capacity_tariff"
+    if _pkg not in sys.modules:
+        _stub = types.ModuleType(_pkg)
+        _stub.__path__ = [
+            str(
+                pathlib.Path(__file__).resolve().parents[2]
+                / "custom_components"
+                / "capacity_tariff"
+            )
+        ]
+        sys.modules[_pkg] = _stub
 
 BRUSSELS = ZoneInfo("Europe/Brussels")
 

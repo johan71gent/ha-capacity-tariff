@@ -1,0 +1,71 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Bronnen",
+        "description": "Kies de bestaande P1-entiteiten waarop deze integratie bouwt. De waarden van de meter zelf (DSMR: *Belgium current average demand* en *Belgium maximum demand current month*; HomeWizard: *Gemiddeld vermogen* / *Piekvermogen deze maand*) zijn de nauwkeurigste bron. Zonder die wordt het kwartier berekend uit de importtellers of de vermogenssensor.",
+        "data": {
+          "power_entity": "Afgenomen vermogen (W)",
+          "meter_average_entity": "Meter: lopend kwartiergemiddelde (OBIS 1.4.0)",
+          "meter_peak_entity": "Meter: piek van de lopende maand (OBIS 1.6.0)",
+          "energy_entities": "Importtellers (kWh, bv. 1.8.1 en 1.8.2)"
+        },
+        "data_description": {
+          "power_entity": "Verplicht. Drijft de voorspelling en de fallback-berekening. Negatieve waarden (injectie) tellen als 0.",
+          "meter_average_entity": "Aanbevolen. Exact wat de netbeheerder factureert.",
+          "meter_peak_entity": "Aanbevolen. Wordt de officiële maandpiek.",
+          "energy_entities": "Fallback als de meterwaarden er niet zijn; meerdere tellers worden opgeteld."
+        }
+      },
+      "settings": {
+        "title": "Tarief en drempels",
+        "data": {
+          "tariff_eur_per_kw_year": "Capaciteitstarief (€/kW/jaar)",
+          "warning_threshold_pct": "Waarschuwingsdrempel (% van de doelpiek)",
+          "floor_kw": "Minimaal gefactureerde piek (kW)",
+          "goal_kw": "Streefpiek voor deze maand (kW, optioneel)"
+        },
+        "data_description": {
+          "tariff_eur_per_kw_year": "Zie je factuur van de netbeheerder (Fluvius). Leeg laten verbergt de kostsensoren.",
+          "warning_threshold_pct": "'Piek in gevaar' gaat aan zodra de voorspelling voor dit kwartier boven dit percentage van de doelpiek komt.",
+          "floor_kw": "Fluvius factureert minstens 2,5 kW.",
+          "goal_kw": "Optioneel: de piek die je deze maand aanvaardt; marge en waarschuwingen worden hiertegen berekend."
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Deze vermogensentiteit wordt al bewaakt."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Capaciteitstarief",
+        "data": {
+          "power_entity": "Afgenomen vermogen (W)",
+          "meter_average_entity": "Meter: lopend kwartiergemiddelde (OBIS 1.4.0)",
+          "meter_peak_entity": "Meter: piek van de lopende maand (OBIS 1.6.0)",
+          "energy_entities": "Importtellers (kWh)",
+          "tariff_eur_per_kw_year": "Capaciteitstarief (€/kW/jaar)",
+          "warning_threshold_pct": "Waarschuwingsdrempel (% van de doelpiek)",
+          "floor_kw": "Minimaal gefactureerde piek (kW)",
+          "goal_kw": "Streefpiek voor deze maand (kW, optioneel)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "quarter_running_average": { "name": "Kwartiervermogen lopend" },
+      "quarter_prediction": { "name": "Kwartier voorspelling" },
+      "quarter_margin": { "name": "Kwartier marge" },
+      "last_quarter": { "name": "Laatste kwartier" },
+      "month_peak": { "name": "Maandpiek" },
+      "month_peak_time": { "name": "Maandpiek tijdstip" },
+      "target_peak": { "name": "Doelpiek" },
+      "average_peak_12m": { "name": "Gemiddelde piek 12 maanden" },
+      "cost_month": { "name": "Capaciteitskost deze maand" },
+      "cost_year": { "name": "Capaciteitskost per jaar" }
+    }
+  }
+}

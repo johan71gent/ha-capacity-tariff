@@ -1,6 +1,6 @@
 # Capaciteitstarief-integratie voor Home Assistant — voorstel v1 (meter-first)
 
-*Status: goedgekeurd ontwerp; **M1 (rekenkern + 85 tests) is klaar**, M2 volgt. Datum: 18 augustus 2026. Herzien: meter-first i.p.v. calc-first.*
+*Status: goedgekeurd ontwerp; **M1 (rekenkern) en M2 (HA-skelet) zijn klaar**, M3 volgt. Datum: 18 augustus 2026. Herzien: meter-first i.p.v. calc-first.*
 
 ## 1. Wat het wordt, in één alinea
 
@@ -159,7 +159,7 @@ hacs.json  README.md  pyproject.toml  .github/workflows/  (hassfest, HACS-valida
 | Stap | Inhoud | Resultaat |
 |---|---|---|
 | **M1** ✅ | `core/` + pytest: doelpiek, voorspelling, marge, ledger, kost (kritiek pad, meter-first) én de fallback-kwartierberekening met de scenario's uit §7 | Klaar: `core/{model,quarter,ledger,cost}.py`, 85 tests groen, ruff clean |
-| **M2** | HA-skelet: manifest, config flow (entity selectors), coordinator in push-modus, Store + herstart-reconstructie, de sensoren uit §4 | Werkende integratie in dev-HA |
+| **M2** ✅ | HA-skelet: manifest, config flow (entity selectors), coordinator in push-modus, Store + herstart-reconstructie, de sensoren uit §4 | Klaar: 10 sensoren, options flow, NL/EN, 11 HA-tests (Docker) |
 | **M3** | Binary sensors, `number.streefpiek`, services, options flow, vertalingen, diagnostics, controle eigen berekening vs. meter | Feature-compleet v1 |
 | **M4** | HACS-klaar: hacs.json, README met automation-voorbeelden (laadpaal pauzeren op `kwartier_marge`), GitHub Actions | Publiceerbaar |
 

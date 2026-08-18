@@ -1,0 +1,11 @@
+# Test image for the Home Assistant layer. HA needs Python 3.13 and a C compiler for some
+# dependencies (lru-dict), which plain Windows/WSL setups lack — so tests run in this image.
+#   docker build -f Dockerfile.test -t capacity-tariff-test .
+#   docker run --rm -v "${PWD}:/work" capacity-tariff-test            # full suite
+#   docker run --rm -v "${PWD}:/work" capacity-tariff-test pytest tests/core -q
+FROM python:3.13
+WORKDIR /work
+COPY requirements_test.txt .
+RUN pip install --no-cache-dir -r requirements_test.txt
+ENV PYTHONDONTWRITEBYTECODE=1
+CMD ["pytest", "-q"]

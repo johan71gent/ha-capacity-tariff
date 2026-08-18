@@ -12,7 +12,7 @@ Ontwerp en status: [`docs/VOORSTEL.md`](docs/VOORSTEL.md).
 | Mijlpaal | Inhoud | Status |
 |---|---|---|
 | M1 | Rekenkern `custom_components/capacity_tariff/core/` + pytest | ✅ klaar |
-| M2 | HA-skelet: config flow, coordinator, storage, sensoren | ⏳ |
+| M2 | HA-skelet: config flow, coordinator, storage, sensoren | ✅ klaar |
 | M3 | Binary sensors, streefpiek, services, options, vertalingen, diagnostics | ⏳ |
 | M4 | HACS-klaar, README met automation-voorbeelden, CI | ⏳ |
 
@@ -53,11 +53,25 @@ Persistentie: `tracker.to_dict()` / `QuarterTracker.from_dict(data, now)` en
 middenin een kwartier wordt gereconstrueerd, een herstart over kwartieren heen levert een `Gap`
 (met gemiddeld vermogen als het register beschikbaar is), nooit verzonnen pieken.
 
+## HA-laag (M2)
+
+- `config_flow.py` — stap 1 bronnen (vermogen verplicht; meter 1.4.0/1.6.0 aanbevolen; kWh-tellers fallback), stap 2 tarief/drempel/minimum/streefpiek; options flow om alles later te wijzigen.
+- `coordinator.py` — push-mode `DataUpdateCoordinator`: state-events van de bronnen, kwartiertick op :00/:15/:30/:45, 30-s verversing (herbevestigt stille maar beschikbare bronnen), `Store`-persistentie met herstart-reconstructie.
+- `sensor.py` — kwartiervermogen lopend, voorspelling, marge, laatste kwartier, maandpiek (+tijdstip), doelpiek, gemiddelde 12 m, kost maand/jaar. Vertalingen NL/EN.
+
 ## Ontwikkelen
 
+Rekenkern-tests draaien overal (Windows-venv volstaat); de HA-laag-tests hebben Home Assistant nodig
+(Python 3.13 + C-compiler voor `lru-dict`), dus die draaien in Docker.
+
 ```bash
+# kern (snel, lokaal)
 py -3.13 -m venv .venv
-.venv/Scripts/python -m pip install -r requirements_test.txt
-.venv/Scripts/python -m pytest
+.venv/Scripts/python -m pip install pytest tzdata ruff
+.venv/Scripts/python -m pytest              # tests/ha wordt overgeslagen zonder HA
 .venv/Scripts/python -m ruff check custom_components tests
+
+# volledige suite (kern + HA-laag)
+docker build -f Dockerfile.test -t capacity-tariff-test .
+docker run --rm -v "${PWD}:/work" capacity-tariff-test
 ```

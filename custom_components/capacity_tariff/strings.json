@@ -1,0 +1,71 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Sources",
+        "description": "Pick the existing P1 entities this integration builds on. The meter's own values (DSMR: *Belgium current average demand* and *Belgium maximum demand current month*; HomeWizard: *Average demand* / *Peak demand current month*) are the most accurate source. Without them the quarter is calculated from the import registers or the power sensor.",
+        "data": {
+          "power_entity": "Import power (W)",
+          "meter_average_entity": "Meter: running quarter average (OBIS 1.4.0)",
+          "meter_peak_entity": "Meter: peak of the running month (OBIS 1.6.0)",
+          "energy_entities": "Import registers (kWh, e.g. 1.8.1 and 1.8.2)"
+        },
+        "data_description": {
+          "power_entity": "Required. Drives the prediction and the fallback calculation. Negative values (injection) count as 0.",
+          "meter_average_entity": "Recommended. Exactly what the grid operator bills.",
+          "meter_peak_entity": "Recommended. Becomes the month peak of record.",
+          "energy_entities": "Fallback when the meter values are not available; several registers are summed."
+        }
+      },
+      "settings": {
+        "title": "Tariff and thresholds",
+        "data": {
+          "tariff_eur_per_kw_year": "Capacity tariff (€/kW/year)",
+          "warning_threshold_pct": "Warning threshold (% of the target peak)",
+          "floor_kw": "Minimum billed peak (kW)",
+          "goal_kw": "Goal peak for this month (kW, optional)"
+        },
+        "data_description": {
+          "tariff_eur_per_kw_year": "See your grid operator's invoice (Fluvius). Leave empty to hide the cost sensors.",
+          "warning_threshold_pct": "'Peak at risk' switches on when the predicted quarter exceeds this share of the target peak.",
+          "floor_kw": "Fluvius bills at least 2.5 kW.",
+          "goal_kw": "Optional: the peak you accept this month; margin and warnings are computed against it."
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "This power entity is already being guarded."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Capaciteitstarief",
+        "data": {
+          "power_entity": "Import power (W)",
+          "meter_average_entity": "Meter: running quarter average (OBIS 1.4.0)",
+          "meter_peak_entity": "Meter: peak of the running month (OBIS 1.6.0)",
+          "energy_entities": "Import registers (kWh)",
+          "tariff_eur_per_kw_year": "Capacity tariff (€/kW/year)",
+          "warning_threshold_pct": "Warning threshold (% of the target peak)",
+          "floor_kw": "Minimum billed peak (kW)",
+          "goal_kw": "Goal peak for this month (kW, optional)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "quarter_running_average": { "name": "Running quarter average" },
+      "quarter_prediction": { "name": "Quarter prediction" },
+      "quarter_margin": { "name": "Quarter margin" },
+      "last_quarter": { "name": "Last quarter" },
+      "month_peak": { "name": "Month peak" },
+      "month_peak_time": { "name": "Month peak time" },
+      "target_peak": { "name": "Target peak" },
+      "average_peak_12m": { "name": "Average peak 12 months" },
+      "cost_month": { "name": "Capacity cost this month" },
+      "cost_year": { "name": "Capacity cost per year" }
+    }
+  }
+}

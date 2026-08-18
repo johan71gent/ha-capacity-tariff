@@ -439,39 +439,30 @@ class QuarterTracker:
         return Source.NONE, 0.0, self._start, self._start
 
     def _finalize(self, boundary_kwh: float | None) -> QuarterResult | None:
+        """Close the running quarter. Every available estimator is evaluated (kept in
+        ``QuarterResult.estimates`` for diagnostics); the best one becomes the result."""
         assert self._start is not None and self._end is not None
         start, end = self._start, self._end
         flags = set(self._flags)
-        source, _base_wh, covered_from, _base_ts = self._best_estimate()
+        estimates: dict[Source, tuple[float, float, set[str]]] = {}  # avg_w, coverage, flags
 
-        if source is Source.METER:
-            m_ts, m_w = self._meter_final or self._meter  # type: ignore[misc]
-            if (end - m_ts).total_seconds() <= self._meter_stale_s:
-                return QuarterResult(
-                    start=start,
-                    end=end,
-                    average_w=m_w,
-                    source=Source.METER,
-                    coverage=1.0,
-                    max_gap_s=self._max_gap_s,
-                    flags=tuple(sorted(flags)),
-                )
-            flags.add("meter_stale")
-            source, _base_wh, covered_from, _base_ts = self._best_estimate(use_meter=False)
-
-        if source is Source.NONE:
-            return None
-
-        gap_to_end = (end - (self._last_sample_ts or covered_from)).total_seconds()
+        gap_to_end = (end - (self._last_sample_ts or start)).total_seconds()
         max_gap = max(self._max_gap_s, gap_to_end)
         hold_ok = gap_to_end <= self._hold_tolerance_s
-        if not hold_ok:
-            flags.add("tail_missing")
 
-        if source is Source.ENERGY:
-            assert self._energy_anchor is not None and self._energy_last is not None
-            _a_ts, a_kwh = self._energy_anchor
+        # --- meter (OBIS 1.4.0)
+        if self._meter is not None and self._meter[0] >= start:
+            m_ts, m_w = self._meter_final or self._meter
+            if (end - m_ts).total_seconds() <= self._meter_stale_s:
+                estimates[Source.METER] = (m_w, 1.0, set())
+            else:
+                flags.add("meter_stale")
+
+        # --- energy register
+        if self._energy_anchor is not None and self._energy_last is not None:
+            a_ts, a_kwh = self._energy_anchor
             l_ts, l_kwh = self._energy_last
+            eflags: set[str] = set()
             if boundary_kwh is not None:
                 end_kwh, covered_to = boundary_kwh, end
             elif hold_ok:
@@ -479,12 +470,19 @@ class QuarterTracker:
                 assert end_kwh is not None
                 covered_to = end
                 if (end - l_ts).total_seconds() > self._energy_tail_flag_s:
-                    flags.add("energy_tail_estimated")
+                    eflags.add("energy_tail_estimated")
             else:
                 end_kwh, covered_to = l_kwh, l_ts  # only what was really measured
-            energy_wh = (end_kwh - a_kwh) * 1000.0
-        else:  # POWER
-            assert self._power_last_ts is not None and self._power_last_w is not None
+                eflags.add("tail_missing")
+            covered_s = (covered_to - a_ts).total_seconds()
+            if covered_s > 0:
+                avg = (end_kwh - a_kwh) * 1000.0 / _h(covered_s)
+                estimates[Source.ENERGY] = (avg, min(1.0, covered_s / QUARTER_S), eflags)
+
+        # --- power integration
+        if self._power_first_ts is not None and self._power_last_ts is not None:
+            assert self._power_last_w is not None
+            pflags: set[str] = set()
             if hold_ok:
                 covered_to = end
                 energy_wh = self._power_int_wh + self._power_last_w * _h(
@@ -493,20 +491,26 @@ class QuarterTracker:
             else:
                 covered_to = self._power_last_ts
                 energy_wh = self._power_int_wh
+                pflags.add("tail_missing")
+            covered_s = (covered_to - self._power_first_ts).total_seconds()
+            if covered_s > 0:
+                avg = energy_wh / _h(covered_s)
+                estimates[Source.POWER] = (avg, min(1.0, covered_s / QUARTER_S), pflags)
 
-        covered_s = (covered_to - covered_from).total_seconds()
-        if covered_s <= 0:
-            return None
-        avg_w = energy_wh / _h(covered_s)
-        return QuarterResult(
-            start=start,
-            end=end,
-            average_w=avg_w,
-            source=source,
-            coverage=min(1.0, covered_s / QUARTER_S),
-            max_gap_s=max_gap,
-            flags=tuple(sorted(flags)),
-        )
+        for source in (Source.METER, Source.ENERGY, Source.POWER):
+            if source in estimates:
+                avg_w, coverage, sflags = estimates[source]
+                return QuarterResult(
+                    start=start,
+                    end=end,
+                    average_w=avg_w,
+                    source=source,
+                    coverage=coverage,
+                    max_gap_s=max_gap,
+                    flags=tuple(sorted(flags | sflags)),
+                    estimates=tuple((str(s), round(v[0], 3)) for s, v in estimates.items()),
+                )
+        return None
 
 
 def _interpolate(t0: datetime, v0: float, t1: datetime, v1: float, at: datetime) -> float:

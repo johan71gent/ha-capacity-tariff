@@ -102,3 +102,20 @@ def test_meter_sample_from_previous_quarter_is_not_used_for_the_new_one(q_start)
     t.on_power(end + timedelta(seconds=5), 1000)  # rolls the quarter; no meter sample yet
     st = t.status(end + timedelta(seconds=5))
     assert st.source is Source.POWER
+
+
+def test_all_estimators_are_kept_for_diagnostics(q_start):
+    """With meter, register and power all present the result carries all three averages."""
+    from .conftest import feed_constant_energy
+
+    t = QuarterTracker()
+    end = q_start + timedelta(minutes=15)
+    feed_meter_average(t, q_start, end, watts=3210, power_w=3400)
+    feed_constant_energy(t, q_start, end, kw=3.2, kwh0=0.0, step_s=1)
+    (r,) = t.tick(end)
+    assert r.source is Source.METER
+    est = r.estimates_w
+    assert set(est) == {"meter", "energy", "power"}
+    assert est["meter"] == 3210
+    assert est["energy"] == pytest.approx(3200, rel=1e-3)
+    assert est["power"] == pytest.approx(3400, rel=1e-3)

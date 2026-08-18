@@ -24,7 +24,6 @@ from homeassistant.helpers.selector import (
 from .const import (
     CONF_ENERGY_ENTITIES,
     CONF_FLOOR_KW,
-    CONF_GOAL_KW,
     CONF_METER_AVERAGE_ENTITY,
     CONF_METER_PEAK_ENTITY,
     CONF_POWER_ENTITY,
@@ -41,7 +40,7 @@ SOURCE_KEYS = (
     CONF_METER_PEAK_ENTITY,
     CONF_ENERGY_ENTITIES,
 )
-SETTING_KEYS = (CONF_TARIFF, CONF_WARNING_THRESHOLD, CONF_FLOOR_KW, CONF_GOAL_KW)
+SETTING_KEYS = (CONF_TARIFF, CONF_WARNING_THRESHOLD, CONF_FLOOR_KW)
 
 
 def _sources_schema() -> vol.Schema:
@@ -90,15 +89,6 @@ def _settings_schema() -> vol.Schema:
                 NumberSelectorConfig(
                     min=0,
                     max=10,
-                    step=0.1,
-                    mode=NumberSelectorMode.BOX,
-                    unit_of_measurement="kW",
-                )
-            ),
-            vol.Optional(CONF_GOAL_KW): NumberSelector(
-                NumberSelectorConfig(
-                    min=0,
-                    max=50,
                     step=0.1,
                     mode=NumberSelectorMode.BOX,
                     unit_of_measurement="kW",

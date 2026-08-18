@@ -1,0 +1,60 @@
+set_month_peak:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: capacity_tariff
+    month:
+      required: false
+      example: "2026-08"
+      selector:
+        text:
+    peak_kw:
+      required: true
+      example: 4.2
+      selector:
+        number:
+          min: 0
+          max: 50
+          step: 0.001
+          unit_of_measurement: kW
+          mode: box
+    timestamp:
+      required: false
+      selector:
+        datetime:
+
+reset_month:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: capacity_tariff
+    month:
+      required: false
+      example: "2026-08"
+      selector:
+        text:
+
+import_history:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: capacity_tariff
+    peaks:
+      required: true
+      example: '{"2025-09": 3.1, "2025-10": 4.6, "2025-11": 5.2}'
+      selector:
+        object:
+    source:
+      required: false
+      default: manual
+      selector:
+        select:
+          options:
+            - manual
+            - meter

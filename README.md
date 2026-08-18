@@ -13,7 +13,7 @@ Ontwerp en status: [`docs/VOORSTEL.md`](docs/VOORSTEL.md).
 |---|---|---|
 | M1 | Rekenkern `custom_components/capacity_tariff/core/` + pytest | ✅ klaar |
 | M2 | HA-skelet: config flow, coordinator, storage, sensoren | ✅ klaar |
-| M3 | Binary sensors, streefpiek, services, options, vertalingen, diagnostics | ⏳ |
+| M3 | Binary sensors, streefpiek, services, options, vertalingen, diagnostics | ✅ klaar |
 | M4 | HACS-klaar, README met automation-voorbeelden, CI | ⏳ |
 
 ## Rekenkern (M1)
@@ -58,6 +58,28 @@ middenin een kwartier wordt gereconstrueerd, een herstart over kwartieren heen l
 - `config_flow.py` — stap 1 bronnen (vermogen verplicht; meter 1.4.0/1.6.0 aanbevolen; kWh-tellers fallback), stap 2 tarief/drempel/minimum/streefpiek; options flow om alles later te wijzigen.
 - `coordinator.py` — push-mode `DataUpdateCoordinator`: state-events van de bronnen, kwartiertick op :00/:15/:30/:45, 30-s verversing (herbevestigt stille maar beschikbare bronnen), `Store`-persistentie met herstart-reconstructie.
 - `sensor.py` — kwartiervermogen lopend, voorspelling, marge, laatste kwartier, maandpiek (+tijdstip), doelpiek, gemiddelde 12 m, kost maand/jaar. Vertalingen NL/EN.
+
+## Automations (M3)
+
+- `binary_sensor.<naam>_piek_in_gevaar` — voorspelling > drempel % × doelpiek.
+- `binary_sensor.<naam>_piek_wordt_gebroken` — wiskundig zeker, ook bij 0 W de rest van het kwartier.
+- `number.<naam>_streefpiek` — optioneel doel (kW, 0 = geen); doelpiek = max(2,5 kW, maandpiek, streefpiek).
+- Services `capacity_tariff.set_month_peak`, `reset_month`, `import_history` (bv. 12 maanden van je factuur of de meter seeden).
+- Diagnostics-download bevat bronnen, lopend kwartier, de laatste 96 kwartieren met de schatting per bron (`meter`/`energy`/`power`) en `calc_minus_meter_w`, plus de volledige storage.
+
+Voorbeeld — laadpaal pauzeren zodra de piek in gevaar komt:
+
+```yaml
+automation:
+  - alias: Laadpaal pauzeren bij piekgevaar
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.capaciteitstarief_piek_in_gevaar
+        to: "on"
+    actions:
+      - action: switch.turn_off
+        target: { entity_id: switch.laadpaal }
+```
 
 ## Ontwikkelen
 

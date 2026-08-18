@@ -22,14 +22,12 @@
         "data": {
           "tariff_eur_per_kw_year": "Capacity tariff (€/kW/year)",
           "warning_threshold_pct": "Warning threshold (% of the target peak)",
-          "floor_kw": "Minimum billed peak (kW)",
-          "goal_kw": "Goal peak for this month (kW, optional)"
+          "floor_kw": "Minimum billed peak (kW)"
         },
         "data_description": {
           "tariff_eur_per_kw_year": "See your grid operator's invoice (Fluvius). Leave empty to hide the cost sensors.",
           "warning_threshold_pct": "'Peak at risk' switches on when the predicted quarter exceeds this share of the target peak.",
-          "floor_kw": "Fluvius bills at least 2.5 kW.",
-          "goal_kw": "Optional: the peak you accept this month; margin and warnings are computed against it."
+          "floor_kw": "Fluvius bills at least 2.5 kW."
         }
       }
     },
@@ -48,24 +46,120 @@
           "energy_entities": "Import registers (kWh)",
           "tariff_eur_per_kw_year": "Capacity tariff (€/kW/year)",
           "warning_threshold_pct": "Warning threshold (% of the target peak)",
-          "floor_kw": "Minimum billed peak (kW)",
-          "goal_kw": "Goal peak for this month (kW, optional)"
+          "floor_kw": "Minimum billed peak (kW)"
         }
       }
     }
   },
   "entity": {
     "sensor": {
-      "quarter_running_average": { "name": "Running quarter average" },
-      "quarter_prediction": { "name": "Quarter prediction" },
-      "quarter_margin": { "name": "Quarter margin" },
-      "last_quarter": { "name": "Last quarter" },
-      "month_peak": { "name": "Month peak" },
-      "month_peak_time": { "name": "Month peak time" },
-      "target_peak": { "name": "Target peak" },
-      "average_peak_12m": { "name": "Average peak 12 months" },
-      "cost_month": { "name": "Capacity cost this month" },
-      "cost_year": { "name": "Capacity cost per year" }
+      "quarter_running_average": {
+        "name": "Running quarter average"
+      },
+      "quarter_prediction": {
+        "name": "Quarter prediction"
+      },
+      "quarter_margin": {
+        "name": "Quarter margin"
+      },
+      "last_quarter": {
+        "name": "Last quarter"
+      },
+      "month_peak": {
+        "name": "Month peak"
+      },
+      "month_peak_time": {
+        "name": "Month peak time"
+      },
+      "target_peak": {
+        "name": "Target peak"
+      },
+      "average_peak_12m": {
+        "name": "Average peak 12 months"
+      },
+      "cost_month": {
+        "name": "Capacity cost this month"
+      },
+      "cost_year": {
+        "name": "Capacity cost per year"
+      }
+    },
+    "binary_sensor": {
+      "peak_at_risk": {
+        "name": "Peak at risk"
+      },
+      "peak_exceeded": {
+        "name": "Peak will be exceeded"
+      }
+    },
+    "number": {
+      "goal_peak": {
+        "name": "Goal peak"
+      }
+    }
+  },
+  "services": {
+    "set_month_peak": {
+      "name": "Set month peak",
+      "description": "Manually set (correct) the peak of a month. Overrides the meter and calculated values for that month.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Integration entry",
+          "description": "Which Capaciteitstarief entry; may be omitted when only one exists."
+        },
+        "month": {
+          "name": "Month",
+          "description": "YYYY-MM; defaults to the running month."
+        },
+        "peak_kw": {
+          "name": "Peak",
+          "description": "Quarter-hour peak in kW."
+        },
+        "timestamp": {
+          "name": "Timestamp",
+          "description": "When the peak occurred (optional)."
+        }
+      }
+    },
+    "reset_month": {
+      "name": "Reset month",
+      "description": "Forget everything recorded for a month (calculated, meter and manual values).",
+      "fields": {
+        "config_entry_id": {
+          "name": "Integration entry",
+          "description": "Which Capaciteitstarief entry; may be omitted when only one exists."
+        },
+        "month": {
+          "name": "Month",
+          "description": "YYYY-MM; defaults to the running month."
+        }
+      }
+    },
+    "import_history": {
+      "name": "Import history",
+      "description": "Seed past monthly peaks, e.g. from an invoice or the meter's 13-month history, so the 12-month average is right from day one.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Integration entry",
+          "description": "Which Capaciteitstarief entry; may be omitted when only one exists."
+        },
+        "peaks": {
+          "name": "Peaks",
+          "description": "Mapping of month (YYYY-MM) to peak in kW."
+        },
+        "source": {
+          "name": "Source",
+          "description": "'manual' (invoice) or 'meter' (values reported by the meter)."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "No loaded Capaciteitstarief entry with id {entry_id}."
+    },
+    "entry_required": {
+      "message": "Several Capaciteitstarief entries exist; pass config_entry_id."
     }
   }
 }

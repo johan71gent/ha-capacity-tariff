@@ -7,7 +7,6 @@ from homeassistant.data_entry_flow import FlowResultType
 from custom_components.capacity_tariff.const import (
     CONF_ENERGY_ENTITIES,
     CONF_FLOOR_KW,
-    CONF_GOAL_KW,
     CONF_METER_AVERAGE_ENTITY,
     CONF_METER_PEAK_ENTITY,
     CONF_POWER_ENTITY,
@@ -96,18 +95,12 @@ async def test_options_flow_updates_sources_and_settings(hass: HomeAssistant, mo
             CONF_TARIFF: 52.0,
             CONF_WARNING_THRESHOLD: 80,
             CONF_FLOOR_KW: 2.5,
-            CONF_GOAL_KW: 4.0,
         },
     )
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert mock_entry.data == {CONF_POWER_ENTITY: POWER, CONF_METER_AVERAGE_ENTITY: METER_AVG}
-    assert mock_entry.options == {
-        CONF_TARIFF: 52.0,
-        CONF_WARNING_THRESHOLD: 80,
-        CONF_FLOOR_KW: 2.5,
-        CONF_GOAL_KW: 4.0,
-    }
-    # reloaded with the new goal: target is now 4 kW
-    state = hass.states.get("sensor.capaciteitstarief_target_peak")
-    assert float(state.state) == 4.0
+    assert mock_entry.options == {CONF_TARIFF: 52.0, CONF_WARNING_THRESHOLD: 80, CONF_FLOOR_KW: 2.5}
+    # reloaded with the new tariff
+    state = hass.states.get("sensor.capaciteitstarief_capacity_cost_per_year")
+    assert float(state.state) == 2.5 * 52.0

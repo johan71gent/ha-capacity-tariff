@@ -22,14 +22,12 @@
         "data": {
           "tariff_eur_per_kw_year": "Capaciteitstarief (€/kW/jaar)",
           "warning_threshold_pct": "Waarschuwingsdrempel (% van de doelpiek)",
-          "floor_kw": "Minimaal gefactureerde piek (kW)",
-          "goal_kw": "Streefpiek voor deze maand (kW, optioneel)"
+          "floor_kw": "Minimaal gefactureerde piek (kW)"
         },
         "data_description": {
           "tariff_eur_per_kw_year": "Zie je factuur van de netbeheerder (Fluvius). Leeg laten verbergt de kostsensoren.",
           "warning_threshold_pct": "'Piek in gevaar' gaat aan zodra de voorspelling voor dit kwartier boven dit percentage van de doelpiek komt.",
-          "floor_kw": "Fluvius factureert minstens 2,5 kW.",
-          "goal_kw": "Optioneel: de piek die je deze maand aanvaardt; marge en waarschuwingen worden hiertegen berekend."
+          "floor_kw": "Fluvius factureert minstens 2,5 kW."
         }
       }
     },
@@ -48,24 +46,120 @@
           "energy_entities": "Importtellers (kWh)",
           "tariff_eur_per_kw_year": "Capaciteitstarief (€/kW/jaar)",
           "warning_threshold_pct": "Waarschuwingsdrempel (% van de doelpiek)",
-          "floor_kw": "Minimaal gefactureerde piek (kW)",
-          "goal_kw": "Streefpiek voor deze maand (kW, optioneel)"
+          "floor_kw": "Minimaal gefactureerde piek (kW)"
         }
       }
     }
   },
   "entity": {
     "sensor": {
-      "quarter_running_average": { "name": "Kwartiervermogen lopend" },
-      "quarter_prediction": { "name": "Kwartier voorspelling" },
-      "quarter_margin": { "name": "Kwartier marge" },
-      "last_quarter": { "name": "Laatste kwartier" },
-      "month_peak": { "name": "Maandpiek" },
-      "month_peak_time": { "name": "Maandpiek tijdstip" },
-      "target_peak": { "name": "Doelpiek" },
-      "average_peak_12m": { "name": "Gemiddelde piek 12 maanden" },
-      "cost_month": { "name": "Capaciteitskost deze maand" },
-      "cost_year": { "name": "Capaciteitskost per jaar" }
+      "quarter_running_average": {
+        "name": "Kwartiervermogen lopend"
+      },
+      "quarter_prediction": {
+        "name": "Kwartier voorspelling"
+      },
+      "quarter_margin": {
+        "name": "Kwartier marge"
+      },
+      "last_quarter": {
+        "name": "Laatste kwartier"
+      },
+      "month_peak": {
+        "name": "Maandpiek"
+      },
+      "month_peak_time": {
+        "name": "Maandpiek tijdstip"
+      },
+      "target_peak": {
+        "name": "Doelpiek"
+      },
+      "average_peak_12m": {
+        "name": "Gemiddelde piek 12 maanden"
+      },
+      "cost_month": {
+        "name": "Capaciteitskost deze maand"
+      },
+      "cost_year": {
+        "name": "Capaciteitskost per jaar"
+      }
+    },
+    "binary_sensor": {
+      "peak_at_risk": {
+        "name": "Piek in gevaar"
+      },
+      "peak_exceeded": {
+        "name": "Piek wordt gebroken"
+      }
+    },
+    "number": {
+      "goal_peak": {
+        "name": "Streefpiek"
+      }
+    }
+  },
+  "services": {
+    "set_month_peak": {
+      "name": "Maandpiek instellen",
+      "description": "Stel de piek van een maand handmatig in (correctie). Overschrijft de meter- en berekende waarden voor die maand.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Integratie-instantie",
+          "description": "Welke Capaciteitstarief-instantie; mag weg als er maar één is."
+        },
+        "month": {
+          "name": "Maand",
+          "description": "JJJJ-MM; standaard de lopende maand."
+        },
+        "peak_kw": {
+          "name": "Piek",
+          "description": "Kwartierpiek in kW."
+        },
+        "timestamp": {
+          "name": "Tijdstip",
+          "description": "Wanneer de piek viel (optioneel)."
+        }
+      }
+    },
+    "reset_month": {
+      "name": "Maand resetten",
+      "description": "Vergeet alles wat voor een maand is bijgehouden (berekende, meter- en handmatige waarden).",
+      "fields": {
+        "config_entry_id": {
+          "name": "Integratie-instantie",
+          "description": "Welke Capaciteitstarief-instantie; mag weg als er maar één is."
+        },
+        "month": {
+          "name": "Maand",
+          "description": "JJJJ-MM; standaard de lopende maand."
+        }
+      }
+    },
+    "import_history": {
+      "name": "Historiek importeren",
+      "description": "Vul vroegere maandpieken in, bv. van een factuur of uit de 13-maandshistoriek van de meter, zodat het 12-maandsgemiddelde meteen klopt.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Integratie-instantie",
+          "description": "Welke Capaciteitstarief-instantie; mag weg als er maar één is."
+        },
+        "peaks": {
+          "name": "Pieken",
+          "description": "Maand (JJJJ-MM) naar piek in kW."
+        },
+        "source": {
+          "name": "Bron",
+          "description": "'manual' (factuur) of 'meter' (waarden van de meter zelf)."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "Geen geladen Capaciteitstarief-instantie met id {entry_id}."
+    },
+    "entry_required": {
+      "message": "Er zijn meerdere Capaciteitstarief-instanties; geef config_entry_id mee."
     }
   }
 }

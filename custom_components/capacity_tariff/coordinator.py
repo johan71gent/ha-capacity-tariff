@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -43,6 +44,7 @@ from .core import (
     QuarterResult,
     QuarterStatus,
     QuarterTracker,
+    Source,
     effective_target_kw,
     month_cost,
     year_cost,
@@ -54,6 +56,9 @@ _POWER_FACTORS = {"W": 1.0, "kW": 1000.0, "MW": 1_000_000.0}
 _ENERGY_FACTORS = {"Wh": 0.001, "kWh": 1.0, "MWh": 1000.0}
 REAFFIRM_AFTER = timedelta(seconds=60)
 """Sources quiet for longer than this are re-fed at their current value (see refresh)."""
+
+RECENT_RESULTS = 96
+"""Closed quarters kept in memory for diagnostics (24 h)."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +114,8 @@ class CapacityTariffCoordinator(DataUpdateCoordinator[CapacityData]):
         self.tracker = QuarterTracker()
         self.ledger = MonthLedger(tz=self.tz, floor_kw=floor)
         self._last_result: QuarterResult | None = None
+        self._goal_kw: float | None = None
+        self.recent_results: deque[QuarterResult] = deque(maxlen=RECENT_RESULTS)
         self._unsubs: list[Callable[[], None]] = []
 
     # ------------------------------------------------------------------ config
@@ -146,8 +153,8 @@ class CapacityTariffCoordinator(DataUpdateCoordinator[CapacityData]):
 
     @property
     def goal_kw(self) -> float | None:
-        value = self.entry.options.get(CONF_GOAL_KW)
-        return None if value in (None, "", 0) else float(value)
+        """Optional goal peak (kW) set through ``number.streefpiek``; ``None`` = no goal."""
+        return self._goal_kw
 
     @property
     def threshold(self) -> float:
@@ -167,6 +174,8 @@ class CapacityTariffCoordinator(DataUpdateCoordinator[CapacityData]):
                 self.ledger = MonthLedger.from_dict(
                     stored.get("ledger") or {}, tz=self.tz, floor_kw=self.ledger.floor_kw
                 )
+                goal = stored.get(CONF_GOAL_KW)
+                self._goal_kw = None if goal in (None, 0) else float(goal)
             except (KeyError, ValueError, TypeError) as err:  # corrupt storage: start fresh
                 _LOGGER.warning("Ignoring corrupt storage for %s: %s", self.entry.title, err)
 
@@ -280,11 +289,48 @@ class CapacityTariffCoordinator(DataUpdateCoordinator[CapacityData]):
     def _record(self, results: list[QuarterResult]) -> None:
         for result in results:
             self._last_result = result
+            self.recent_results.append(result)
             if self.ledger.record(result):
                 _LOGGER.debug("New month peak %.3f kW at %s", result.average_kw, result.end)
         if results:
             self.ledger.prune(self.ledger.month_key(results[-1].start))
             self._store.async_delay_save(self._to_store, 1)
+
+    # ------------------------------------------------------------------ user actions
+
+    async def async_set_goal(self, goal_kw: float | None) -> None:
+        """Set/clear the goal peak (``number.streefpiek``); persisted with the peaks."""
+        self._goal_kw = None if goal_kw in (None, 0) else float(goal_kw)
+        await self._commit()
+
+    async def async_set_month_peak(
+        self, month: str | None, peak_kw: float, at: datetime | None
+    ) -> None:
+        """Manual correction: overrides meter and calculated values for that month."""
+        key = month or self.ledger.month_key(dt_util.utcnow())
+        self.ledger.set_manual_peak(key, peak_kw, at)
+        await self._commit()
+
+    async def async_reset_month(self, month: str | None) -> None:
+        """Forget everything about a month (default: the running month)."""
+        key = month or self.ledger.month_key(dt_util.utcnow())
+        self.ledger.reset_month(key)
+        await self._commit()
+
+    async def async_import_history(self, peaks: dict[str, float], source: str) -> None:
+        """Seed past months, e.g. from an invoice (manual) or the meter's 13-month history."""
+        for key, kw in peaks.items():
+            if source == str(Source.METER):
+                self.ledger.set_meter_peak(key, float(kw), None)
+            else:
+                self.ledger.set_manual_peak(key, float(kw), None)
+        await self._commit()
+
+    async def _commit(self) -> None:
+        now = dt_util.utcnow()
+        self.ledger.prune(self.ledger.month_key(now))
+        self._recompute(now)
+        await self._store.async_save(self._to_store())
 
     # ------------------------------------------------------------------ output
 
@@ -316,4 +362,8 @@ class CapacityTariffCoordinator(DataUpdateCoordinator[CapacityData]):
         self.async_set_updated_data(data)
 
     def _to_store(self) -> dict[str, Any]:
-        return {"tracker": self.tracker.to_dict(), "ledger": self.ledger.to_dict()}
+        return {
+            "tracker": self.tracker.to_dict(),
+            "ledger": self.ledger.to_dict(),
+            CONF_GOAL_KW: self._goal_kw,
+        }

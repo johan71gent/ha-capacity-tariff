@@ -71,9 +71,17 @@ class QuarterResult:
     flags: tuple[str, ...] = ()
     """Quality annotations, e.g. ``restored``, ``energy_tail_estimated``, ``counter_decrease``."""
 
+    estimates: tuple[tuple[str, float], ...] = ()
+    """Average (W) according to every estimator that had data, e.g.
+    ``(("meter", 3210.0), ("energy", 3198.4), ("power", 3402.1))`` — for diagnostics."""
+
     @property
     def average_kw(self) -> float:
         return self.average_w / 1000.0
+
+    @property
+    def estimates_w(self) -> dict[str, float]:
+        return dict(self.estimates)
 
     @property
     def energy_wh(self) -> float:

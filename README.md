@@ -1,3 +1,5 @@
+<img src="brands/capacity_tariff/logo@2x.png" alt="Capaciteitstarief" height="96">
+
 # Capaciteitstarief (BE) voor Home Assistant
 
 [![Validate](https://github.com/johan71gent/ha-capacity-tariff/actions/workflows/validate.yml/badge.svg)](https://github.com/johan71gent/ha-capacity-tariff/actions/workflows/validate.yml)

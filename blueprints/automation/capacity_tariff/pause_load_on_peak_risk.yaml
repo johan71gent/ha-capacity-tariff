@@ -1,0 +1,89 @@
+blueprint:
+  name: Capaciteitstarief – verbruiker pauzeren bij piekgevaar
+  description: >-
+    Schakelt een grote verbruiker (laadpaal, boiler, warmtepomp, ...) uit zodra
+    "Maandpiek in gevaar" aangaat, en weer aan zodra er lang genoeg voldoende
+    marge is voor het vermogen van die verbruiker.
+    Vereist de integratie "Capaciteitstarief (BE)".
+  domain: automation
+  author: johan71gent
+  source_url: https://github.com/johan71gent/ha-capacity-tariff/blob/main/blueprints/automation/capacity_tariff/pause_load_on_peak_risk.yaml
+  input:
+    at_risk:
+      name: Maandpiek in gevaar
+      description: binary_sensor "Maandpiek in gevaar" / "Peak demand at risk" van de integratie.
+      selector:
+        entity:
+          domain: binary_sensor
+          integration: capacity_tariff
+    margin:
+      name: Nog beschikbaar vermogen
+      description: sensor "Nog beschikbaar vermogen (dit kwartier)" / "Power still available (this quarter)".
+      selector:
+        entity:
+          domain: sensor
+          integration: capacity_tariff
+    load:
+      name: Verbruiker
+      description: De schakelaar die de verbruiker aan/uit zet.
+      selector:
+        entity:
+          domain:
+            - switch
+            - input_boolean
+    load_power:
+      name: Vermogen van de verbruiker (W)
+      description: Hervatten pas als er minstens zoveel marge is (bv. 7400 W voor 1 fase 32 A, 11000 W voor 3 x 16 A).
+      default: 7400
+      selector:
+        number:
+          min: 100
+          max: 25000
+          step: 100
+          unit_of_measurement: W
+          mode: box
+    resume_delay:
+      name: Hervatten na
+      description: Zoveel seconden aaneengesloten voldoende marge voor de verbruiker weer aangaat (vermijdt aan/uit-pendelen).
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 900
+          step: 5
+          unit_of_measurement: s
+          mode: box
+
+mode: restart
+
+triggers:
+  - trigger: state
+    entity_id: !input at_risk
+    to: "on"
+    id: pause
+  - trigger: numeric_state
+    entity_id: !input margin
+    above: !input load_power
+    for:
+      seconds: !input resume_delay
+    id: resume
+
+actions:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: pause
+        sequence:
+          - action: homeassistant.turn_off
+            target:
+              entity_id: !input load
+      - conditions:
+          - condition: trigger
+            id: resume
+          - condition: state
+            entity_id: !input at_risk
+            state: "off"
+        sequence:
+          - action: homeassistant.turn_on
+            target:
+              entity_id: !input load

@@ -1,8 +1,9 @@
 # Brand assets (icon / logo)
 
-Home Assistant and HACS do **not** load icons from the integration itself; they come from the
-central [home-assistant/brands](https://github.com/home-assistant/brands) repository. Until the
-brands PR is merged the integration shows a placeholder icon — that is expected.
+Since Home Assistant 2026.3 a custom integration can ship its own brand images in
+`custom_components/<domain>/brand/` — that is what this integration does (copies of the files
+below live in `custom_components/capacity_tariff/brand/`), so HA and HACS show the icon without a
+home-assistant/brands PR (which no longer accepts new custom integrations anyway).
 
 `capacity_tariff/` contains the files in the exact layout brands expects for a custom integration:
 

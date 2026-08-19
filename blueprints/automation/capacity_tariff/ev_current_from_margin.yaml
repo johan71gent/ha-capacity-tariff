@@ -1,0 +1,111 @@
+blueprint:
+  name: Capaciteitstarief – laadstroom regelen op beschikbare marge
+  description: >-
+    Zet de laadstroom (A) van een laadpaal telkens op wat de resterende marge
+    van dit kwartier toelaat: stroom = (marge - reserve) / (spanning x fasen),
+    begrensd tussen een minimum en een maximum. Onder het minimum blijft de
+    laadstroom op het minimum staan, of gaat naar 0 als je dat kiest.
+    Vereist de integratie "Capaciteitstarief (BE)".
+  domain: automation
+  author: johan71gent
+  source_url: https://github.com/johan71gent/ha-capacity-tariff/blob/main/blueprints/automation/capacity_tariff/ev_current_from_margin.yaml
+  input:
+    margin:
+      name: Nog beschikbaar vermogen (dit kwartier)
+      selector:
+        entity:
+          domain: sensor
+          integration: capacity_tariff
+    current_entity:
+      name: Laadstroom-instelling (number)
+      description: De number-entiteit van je laadpaal die de maximale laadstroom in ampère instelt.
+      selector:
+        entity:
+          domain: number
+    phases:
+      name: Aantal fasen
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 3
+          step: 2
+          mode: box
+    voltage:
+      name: Spanning (V)
+      default: 230
+      selector:
+        number:
+          min: 200
+          max: 250
+          mode: box
+    min_current:
+      name: Minimale laadstroom (A)
+      default: 6
+      selector:
+        number:
+          min: 0
+          max: 32
+          mode: box
+    max_current:
+      name: Maximale laadstroom (A)
+      default: 16
+      selector:
+        number:
+          min: 6
+          max: 32
+          mode: box
+    reserve:
+      name: Veiligheidsmarge (W)
+      description: Houd dit vermogen vrij voor de rest van het huishouden.
+      default: 500
+      selector:
+        number:
+          min: 0
+          max: 5000
+          step: 100
+          unit_of_measurement: W
+          mode: box
+    zero_below_min:
+      name: Naar 0 A onder het minimum
+      description: Aan = laden stopt als de marge onder het minimum zakt; uit = blijf op het minimum laden.
+      default: false
+      selector:
+        boolean:
+
+mode: queued
+max_exceeded: silent
+
+variables:
+  margin_entity: !input margin
+  current_entity: !input current_entity
+  phases: !input phases
+  voltage: !input voltage
+  min_current: !input min_current
+  max_current: !input max_current
+  reserve: !input reserve
+  zero_below_min: !input zero_below_min
+  target_current: >-
+    {% set margin = states(margin_entity) | float(0) - reserve %}
+    {% set amps = (margin / (voltage * phases)) | int(0) %}
+    {% if amps >= min_current %}{{ [amps, max_current] | min }}
+    {% elif zero_below_min %}0
+    {% else %}{{ min_current }}{% endif %}
+
+triggers:
+  - trigger: state
+    entity_id: !input margin
+    not_to:
+      - unknown
+      - unavailable
+
+conditions:
+  - condition: template
+    value_template: "{{ (states(current_entity) | float(-1)) != (target_current | float) }}"
+
+actions:
+  - action: number.set_value
+    target:
+      entity_id: !input current_entity
+    data:
+      value: "{{ target_current }}"

@@ -1,0 +1,87 @@
+blueprint:
+  name: Capaciteitstarief – melding bij piekgevaar
+  description: >-
+    Stuurt een melding naar je telefoon als "Maandpiek in gevaar" aangaat of als
+    de maandpiek zeker overschreden wordt, met het verwachte kwartiervermogen,
+    de resterende marge en de huidige maandpiek.
+    Vereist de integratie "Capaciteitstarief (BE)" en de Companion-app.
+  domain: automation
+  author: johan71gent
+  source_url: https://github.com/johan71gent/ha-capacity-tariff/blob/main/blueprints/automation/capacity_tariff/notify_peak_risk.yaml
+  input:
+    at_risk:
+      name: Maandpiek in gevaar
+      selector:
+        entity:
+          domain: binary_sensor
+          integration: capacity_tariff
+    will_exceed:
+      name: Maandpiek wordt overschreden
+      selector:
+        entity:
+          domain: binary_sensor
+          integration: capacity_tariff
+    prediction:
+      name: Kwartiervermogen verwacht (einde kwartier)
+      selector:
+        entity:
+          domain: sensor
+          integration: capacity_tariff
+    margin:
+      name: Nog beschikbaar vermogen (dit kwartier)
+      selector:
+        entity:
+          domain: sensor
+          integration: capacity_tariff
+    month_peak:
+      name: Maandpiek (lopende maand)
+      selector:
+        entity:
+          domain: sensor
+          integration: capacity_tariff
+    notify_device:
+      name: Telefoon
+      description: Toestel met de Home Assistant Companion-app.
+      selector:
+        device:
+          integration: mobile_app
+    cooldown:
+      name: Minimale tijd tussen meldingen
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 120
+          unit_of_measurement: min
+          mode: box
+
+mode: single
+max_exceeded: silent
+
+variables:
+  prediction_entity: !input prediction
+  margin_entity: !input margin
+  peak_entity: !input month_peak
+
+triggers:
+  - trigger: state
+    entity_id: !input at_risk
+    to: "on"
+    id: risk
+  - trigger: state
+    entity_id: !input will_exceed
+    to: "on"
+    id: exceed
+
+actions:
+  - domain: mobile_app
+    type: notify
+    device_id: !input notify_device
+    title: >-
+      {% if trigger.id == 'exceed' %}Maandpiek wordt overschreden{% else %}Maandpiek in gevaar{% endif %}
+    message: >-
+      Verwacht dit kwartier: {{ states(prediction_entity) | int(0) }} W,
+      nog beschikbaar: {{ states(margin_entity) | int(0) }} W,
+      maandpiek nu: {{ states(peak_entity) }} kW.
+  - delay:
+      minutes: !input cooldown

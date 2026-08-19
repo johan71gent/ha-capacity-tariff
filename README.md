@@ -13,7 +13,8 @@ het kwartiergemiddelde en de maandpiek zelf; deze integratie voegt toe wat de me
 - levert twee **binary sensors** voor automations: *piek in gevaar* en *piek wordt gebroken*;
 - rekent de **kost** uit (deze maand, op jaarbasis, gemiddelde van 12 maandpieken);
 - houdt de piekhistoriek **herstart-bestendig** bij, met correctie- en importservices;
-- werkt met elke bestaande P1-integratie (DSMR, HomeWizard, Slimmelezer, ESPHome …) — geen eigen hardware-uitlezing.
+- werkt met elke bestaande P1-integratie (DSMR, HomeWizard, Slimmelezer, ESPHome …) — geen eigen hardware-uitlezing;
+- levert **blueprints** (verbruiker pauzeren, melding, laadstroom op marge) en een dashboardvoorbeeld.
 
 *English: monitors the Flemish (Belgium) capacity-tariff monthly peak in Home Assistant — prediction, remaining margin, automation triggers, cost. Uses the meter's own P1 values as source of truth; falls back to its own quarter-hour calculation. UI in Dutch and English.*
 
@@ -101,7 +102,63 @@ De namen volgen de benamingen van je P1-meter (HomeWizard / DSMR), zodat je ze n
 
 `config_entry_id` mag weg als je één instantie hebt.
 
-## Automations
+## Blueprints (kant-en-klare automatiseringen)
+
+Drie blueprints zitten in de repo; importeer ze met één klik en kies je entiteiten in de UI:
+
+| Blueprint | Wat het doet | |
+|---|---|---|
+| **Verbruiker pauzeren bij piekgevaar** | zet een laadpaal/boiler/warmtepomp uit zodra *Maandpiek in gevaar* aangaat, en weer aan zodra er X seconden genoeg marge is voor het vermogen van die verbruiker | [![Importeer blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://raw.githubusercontent.com/johan71gent/ha-capacity-tariff/main/blueprints/automation/capacity_tariff/pause_load_on_peak_risk.yaml) |
+| **Melding bij piekgevaar** | push-melding (Companion-app) met verwacht kwartiervermogen, resterende marge en maandpiek, met minimale tussentijd | [![Importeer blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://raw.githubusercontent.com/johan71gent/ha-capacity-tariff/main/blueprints/automation/capacity_tariff/notify_peak_risk.yaml) |
+| **Laadstroom regelen op marge** | zet de laadstroom (A) van je laadpaal continu op wat de resterende marge toelaat: `(marge − reserve) / (230 V × fasen)`, begrensd tussen min en max | [![Importeer blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://raw.githubusercontent.com/johan71gent/ha-capacity-tariff/main/blueprints/automation/capacity_tariff/ev_current_from_margin.yaml) |
+
+Werkt dat niet met één klik: *Instellingen → Automatiseringen → Blueprints → Blueprint importeren* en plak de URL `https://raw.githubusercontent.com/johan71gent/ha-capacity-tariff/main/blueprints/automation/capacity_tariff/<naam>.yaml`.
+
+## Dashboard
+
+Een compacte kaart: meter voor de marge (groen = ruimte, rood = te laat), daaronder de kerncijfers.
+
+```yaml
+type: vertical-stack
+cards:
+  - type: gauge
+    name: Nog beschikbaar dit kwartier
+    entity: sensor.capaciteitstarief_nog_beschikbaar_vermogen_dit_kwartier
+    unit: W
+    min: -2000
+    max: 8000
+    needle: true
+    segments:
+      - from: -2000
+        color: "#d32f2f"
+      - from: 0
+        color: "#f9a825"
+      - from: 2000
+        color: "#2e7d32"
+  - type: entities
+    entities:
+      - entity: sensor.capaciteitstarief_kwartiervermogen_lopend_kwartier
+        name: Kwartiervermogen (lopend)
+      - entity: sensor.capaciteitstarief_kwartiervermogen_verwacht_einde_kwartier
+        name: Verwacht einde kwartier
+      - entity: sensor.capaciteitstarief_maandpiek_lopende_maand
+        name: Maandpiek
+      - entity: sensor.capaciteitstarief_pieklimiet_doel
+        name: Pieklimiet
+      - entity: binary_sensor.capaciteitstarief_maandpiek_in_gevaar
+        name: Piek in gevaar
+      - entity: sensor.capaciteitstarief_capaciteitstarief_kost_per_jaar
+        name: Kost per jaar
+  - type: history-graph
+    hours_to_show: 24
+    entities:
+      - sensor.capaciteitstarief_kwartiervermogen_vorig_kwartier
+      - sensor.capaciteitstarief_maandpiek_lopende_maand
+```
+
+Pas de entity-id's aan als je een andere HA-taal gebruikt (Engelse UI: `…_power_still_available_this_quarter`, `…_peak_demand_current_month`, …).
+
+## Automations (zelf schrijven)
 
 Laadpaal pauzeren zodra de piek in gevaar komt, hervatten als het kwartier weer ruimte geeft:
 
@@ -136,6 +193,10 @@ Vermogen van een boiler moduleren op de marge (template):
 ```yaml
 {{ [0, states('sensor.capaciteitstarief_nog_beschikbaar_vermogen_dit_kwartier') | float(0) - 500] | max }}
 ```
+
+## Naast andere tools
+
+Deze integratie is **de bewaker, niet de sturing**: ze meet, voorspelt en geeft triggers/marge; wat je ermee aanstuurt (laadpaal, batterij, boiler) kies je zelf via automations, de blueprints hierboven of een energiebeheersysteem. Ze draait probleemloos naast EMS-integraties zoals GridPilot of Victron-sturingen. Wil je de **officiële facturatiepiek** uit *Mijn Fluvius* ernaast leggen, dan is [sander110419/Fluvius-home-assistant](https://github.com/sander110419/Fluvius-home-assistant) complementair (cloud, achteraf); deze integratie werkt realtime op je P1-data.
 
 ## Hoe het rekent
 

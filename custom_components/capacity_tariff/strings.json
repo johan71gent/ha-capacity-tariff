@@ -5,15 +5,15 @@
         "title": "Sources",
         "description": "Pick the existing P1 entities this integration builds on. The meter's own values (DSMR: *Belgium current average demand* and *Belgium maximum demand current month*; HomeWizard: *Average demand* / *Peak demand current month*) are the most accurate source. Without them the quarter is calculated from the import registers or the power sensor.",
         "data": {
-          "power_entity": "Import power (W)",
-          "meter_average_entity": "Meter: running quarter average (OBIS 1.4.0)",
-          "meter_peak_entity": "Meter: peak of the running month (OBIS 1.6.0)",
-          "energy_entities": "Import registers (kWh, e.g. 1.8.1 and 1.8.2)"
+          "power_entity": "Power (W) – e.g. HomeWizard 'Power', DSMR 'Power consumption'",
+          "meter_average_entity": "Average demand – HomeWizard 'Average demand', DSMR 'Current average demand' (OBIS 1.4.0)",
+          "meter_peak_entity": "Peak demand current month – HomeWizard 'Peak demand current month', DSMR 'Maximum demand current month' (OBIS 1.6.0)",
+          "energy_entities": "Energy import (kWh) – e.g. HomeWizard 'Energy import' or 'Energy import tariff 1' + 'tariff 2'"
         },
         "data_description": {
-          "power_entity": "Required. Drives the prediction and the fallback calculation. Negative values (injection) count as 0.",
-          "meter_average_entity": "Recommended. Exactly what the grid operator bills.",
-          "meter_peak_entity": "Recommended. Becomes the month peak of record.",
+          "power_entity": "Required. Drives the forecast and the fallback calculation. Negative values (injection) count as 0.",
+          "meter_average_entity": "Recommended – the meter's own running quarter-hour average, exactly what the grid operator bills. Without it the integration estimates it from power/energy.",
+          "meter_peak_entity": "Recommended – the meter's own monthly peak. Becomes the peak of record.",
           "energy_entities": "Fallback when the meter values are not available; several registers are summed."
         }
       },
@@ -40,10 +40,10 @@
       "init": {
         "title": "Capaciteitstarief",
         "data": {
-          "power_entity": "Import power (W)",
-          "meter_average_entity": "Meter: running quarter average (OBIS 1.4.0)",
-          "meter_peak_entity": "Meter: peak of the running month (OBIS 1.6.0)",
-          "energy_entities": "Import registers (kWh)",
+          "power_entity": "Power (W) – e.g. HomeWizard 'Power', DSMR 'Power consumption'",
+          "meter_average_entity": "Average demand – HomeWizard 'Average demand', DSMR 'Current average demand' (OBIS 1.4.0)",
+          "meter_peak_entity": "Peak demand current month – HomeWizard 'Peak demand current month', DSMR 'Maximum demand current month' (OBIS 1.6.0)",
+          "energy_entities": "Energy import (kWh) – e.g. HomeWizard 'Energy import' or 'Energy import tariff 1' + 'tariff 2'",
           "tariff_eur_per_kw_year": "Capacity tariff (€/kW/year)",
           "warning_threshold_pct": "Warning threshold (% of the target peak)",
           "floor_kw": "Minimum billed peak (kW)"
@@ -54,47 +54,47 @@
   "entity": {
     "sensor": {
       "quarter_running_average": {
-        "name": "Running quarter average"
+        "name": "Average demand (running quarter)"
       },
       "quarter_prediction": {
-        "name": "Quarter prediction"
+        "name": "Average demand forecast (end of quarter)"
       },
       "quarter_margin": {
-        "name": "Quarter margin"
+        "name": "Power still available (this quarter)"
       },
       "last_quarter": {
-        "name": "Last quarter"
+        "name": "Average demand (last quarter)"
       },
       "month_peak": {
-        "name": "Month peak"
+        "name": "Peak demand current month"
       },
       "month_peak_time": {
-        "name": "Month peak time"
+        "name": "Peak demand current month – time"
       },
       "target_peak": {
-        "name": "Target peak"
+        "name": "Peak limit (target)"
       },
       "average_peak_12m": {
-        "name": "Average peak 12 months"
+        "name": "Average peak demand (12 months)"
       },
       "cost_month": {
-        "name": "Capacity cost this month"
+        "name": "Capacity tariff cost this month"
       },
       "cost_year": {
-        "name": "Capacity cost per year"
+        "name": "Capacity tariff cost per year"
       }
     },
     "binary_sensor": {
       "peak_at_risk": {
-        "name": "Peak at risk"
+        "name": "Peak demand at risk"
       },
       "peak_exceeded": {
-        "name": "Peak will be exceeded"
+        "name": "Peak demand will be exceeded"
       }
     },
     "number": {
       "goal_peak": {
-        "name": "Goal peak"
+        "name": "Desired peak limit"
       }
     }
   },

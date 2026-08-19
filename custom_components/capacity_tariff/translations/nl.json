@@ -5,15 +5,15 @@
         "title": "Bronnen",
         "description": "Kies de bestaande P1-entiteiten waarop deze integratie bouwt. De waarden van de meter zelf (DSMR: *Belgium current average demand* en *Belgium maximum demand current month*; HomeWizard: *Gemiddeld vermogen* / *Piekvermogen deze maand*) zijn de nauwkeurigste bron. Zonder die wordt het kwartier berekend uit de importtellers of de vermogenssensor.",
         "data": {
-          "power_entity": "Afgenomen vermogen (W)",
-          "meter_average_entity": "Meter: lopend kwartiergemiddelde (OBIS 1.4.0)",
-          "meter_peak_entity": "Meter: piek van de lopende maand (OBIS 1.6.0)",
-          "energy_entities": "Importtellers (kWh, bv. 1.8.1 en 1.8.2)"
+          "power_entity": "Vermogen (W) – bv. HomeWizard 'Power' / 'Vermogen', DSMR 'Stroomverbruik'",
+          "meter_average_entity": "Average demand / kwartiervermogen – HomeWizard 'Average demand', DSMR 'Huidig gemiddeld verbruik' (OBIS 1.4.0)",
+          "meter_peak_entity": "Peak demand current month / maandpiek – HomeWizard 'Peak demand current month', DSMR 'Maximaal verbruik deze maand' (OBIS 1.6.0)",
+          "energy_entities": "Energy import (kWh) – bv. HomeWizard 'Energy import' of 'Energy import tariff 1' + 'tariff 2'"
         },
         "data_description": {
-          "power_entity": "Verplicht. Drijft de voorspelling en de fallback-berekening. Negatieve waarden (injectie) tellen als 0.",
-          "meter_average_entity": "Aanbevolen. Exact wat de netbeheerder factureert.",
-          "meter_peak_entity": "Aanbevolen. Wordt de officiële maandpiek.",
+          "power_entity": "Verplicht. Drijft de verwachting en de terugvalberekening. Negatief (injectie) telt als 0.",
+          "meter_average_entity": "Aanbevolen – het lopende kwartiergemiddelde van de meter zelf, exact wat Fluvius factureert. Zonder deze schat de integratie het uit vermogen/energie.",
+          "meter_peak_entity": "Aanbevolen – de maandpiek van de meter zelf. Wordt de officiële maandpiek.",
           "energy_entities": "Fallback als de meterwaarden er niet zijn; meerdere tellers worden opgeteld."
         }
       },
@@ -40,10 +40,10 @@
       "init": {
         "title": "Capaciteitstarief",
         "data": {
-          "power_entity": "Afgenomen vermogen (W)",
-          "meter_average_entity": "Meter: lopend kwartiergemiddelde (OBIS 1.4.0)",
-          "meter_peak_entity": "Meter: piek van de lopende maand (OBIS 1.6.0)",
-          "energy_entities": "Importtellers (kWh)",
+          "power_entity": "Vermogen (W) – bv. HomeWizard 'Power' / 'Vermogen', DSMR 'Stroomverbruik'",
+          "meter_average_entity": "Average demand / kwartiervermogen – HomeWizard 'Average demand', DSMR 'Huidig gemiddeld verbruik' (OBIS 1.4.0)",
+          "meter_peak_entity": "Peak demand current month / maandpiek – HomeWizard 'Peak demand current month', DSMR 'Maximaal verbruik deze maand' (OBIS 1.6.0)",
+          "energy_entities": "Energy import (kWh) – bv. HomeWizard 'Energy import' of 'Energy import tariff 1' + 'tariff 2'",
           "tariff_eur_per_kw_year": "Capaciteitstarief (€/kW/jaar)",
           "warning_threshold_pct": "Waarschuwingsdrempel (% van de doelpiek)",
           "floor_kw": "Minimaal gefactureerde piek (kW)"
@@ -54,47 +54,47 @@
   "entity": {
     "sensor": {
       "quarter_running_average": {
-        "name": "Kwartiervermogen lopend"
+        "name": "Kwartiervermogen (lopend kwartier)"
       },
       "quarter_prediction": {
-        "name": "Kwartier voorspelling"
+        "name": "Kwartiervermogen verwacht (einde kwartier)"
       },
       "quarter_margin": {
-        "name": "Kwartier marge"
+        "name": "Nog beschikbaar vermogen (dit kwartier)"
       },
       "last_quarter": {
-        "name": "Laatste kwartier"
+        "name": "Kwartiervermogen (vorig kwartier)"
       },
       "month_peak": {
-        "name": "Maandpiek"
+        "name": "Maandpiek (lopende maand)"
       },
       "month_peak_time": {
-        "name": "Maandpiek tijdstip"
+        "name": "Maandpiek – tijdstip"
       },
       "target_peak": {
-        "name": "Doelpiek"
+        "name": "Pieklimiet (doel)"
       },
       "average_peak_12m": {
-        "name": "Gemiddelde piek 12 maanden"
+        "name": "Gemiddelde maandpiek (12 maanden)"
       },
       "cost_month": {
-        "name": "Capaciteitskost deze maand"
+        "name": "Capaciteitstarief kost deze maand"
       },
       "cost_year": {
-        "name": "Capaciteitskost per jaar"
+        "name": "Capaciteitstarief kost per jaar"
       }
     },
     "binary_sensor": {
       "peak_at_risk": {
-        "name": "Piek in gevaar"
+        "name": "Maandpiek in gevaar"
       },
       "peak_exceeded": {
-        "name": "Piek wordt gebroken"
+        "name": "Maandpiek wordt overschreden"
       }
     },
     "number": {
       "goal_peak": {
-        "name": "Streefpiek"
+        "name": "Gewenste pieklimiet"
       }
     }
   },

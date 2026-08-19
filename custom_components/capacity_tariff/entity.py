@@ -19,6 +19,6 @@ class CapacityTariffEntity(CoordinatorEntity[CapacityTariffCoordinator]):
             identifiers={(DOMAIN, coordinator.entry.entry_id)},
             name=coordinator.entry.title,
             manufacturer="Capaciteitstarief (BE)",
-            model="Maandpiek-bewaking",
+            model="Peak demand guard (capacity tariff, P1 based)",
             entry_type=DeviceEntryType.SERVICE,
         )

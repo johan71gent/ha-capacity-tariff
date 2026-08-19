@@ -42,21 +42,35 @@ Bronvoorrang per grootheid: **meter-eigen sensor › kWh-register › tijdgewoge
 
 ## Entiteiten
 
+De namen volgen de benamingen van je P1-meter (HomeWizard / DSMR), zodat je ze naast elkaar kunt leggen:
+
+| Integratie (NL / EN) | P1-meter toont | Verschil |
+|---|---|---|
+| **Kwartiervermogen (lopend kwartier)** / Average demand (running quarter) | HomeWizard *Average demand*, DSMR *Current average demand* | zelfde grootheid; komt van de meter als je die bron koos, anders eigen schatting (attribuut `source`) |
+| **Kwartiervermogen verwacht (einde kwartier)** / Average demand forecast | – | hoe het lopende kwartier eindigt als het huidige vermogen aanhoudt |
+| **Nog beschikbaar vermogen (dit kwartier)** / Power still available | – | wat je de rest van het kwartier nog constant mag trekken zonder de pieklimiet te breken |
+| **Kwartiervermogen (vorig kwartier)** / Average demand (last quarter) | – | laatst afgesloten kwartier |
+| **Maandpiek (lopende maand)** / Peak demand current month | HomeWizard *Peak demand current month*, DSMR *Maximum demand current month* | zelfde grootheid, maar nooit lager dan de minimaal gefactureerde 2,5 kW (daarom kan hier 2,5 kW staan terwijl de meter bv. 2,425 kW toont) |
+| **Pieklimiet (doel)** / Peak limit (target) | – | `max(2,5 kW, maandpiek, gewenste pieklimiet)`: hiertegen worden marge en waarschuwingen gemeten |
+| **Gemiddelde maandpiek (12 maanden)** / Average peak demand (12 months) | – | wat Fluvius factureert |
+
 | Entiteit | Eenheid | Betekenis |
 |---|---|---|
-| `sensor.…_kwartiervermogen_lopend` | W | Lopend kwartiergemiddelde (attributen: bron, dekking, resterende seconden) |
-| `sensor.…_kwartier_voorspelling` | W | Verwacht kwartiergemiddelde als het huidige vermogen aanhoudt |
-| `sensor.…_kwartier_marge` | W | Wat je de rest van het kwartier nog constant mag trekken zonder de doelpiek te breken; negatief = te laat. **De sensor voor automations** |
-| `sensor.…_laatste_kwartier` | W | Laatst afgesloten kwartier (attributen: bron, dekking, kwaliteitsvlaggen, laatste gap) |
-| `sensor.…_maandpiek` | kW | Piek van deze maand, minimaal 2,5 kW (attributen: bron, top-5 kwartieren) |
+| `sensor.…_kwartiervermogen_lopend_kwartier` | W | Lopend kwartiergemiddelde (attributen: bron, dekking, resterende seconden) |
+| `sensor.…_kwartiervermogen_verwacht_einde_kwartier` | W | Verwacht kwartiergemiddelde als het huidige vermogen aanhoudt |
+| `sensor.…_nog_beschikbaar_vermogen_dit_kwartier` | W | Wat je de rest van het kwartier nog constant mag trekken zonder de pieklimiet te breken; negatief = te laat. **De sensor voor automations** |
+| `sensor.…_kwartiervermogen_vorig_kwartier` | W | Laatst afgesloten kwartier (attributen: bron, dekking, kwaliteitsvlaggen, laatste gap) |
+| `sensor.…_maandpiek_lopende_maand` | kW | Piek van deze maand, minimaal 2,5 kW (attributen: bron, top-5 kwartieren) |
 | `sensor.…_maandpiek_tijdstip` | tijdstip | Wanneer die piek viel |
-| `sensor.…_doelpiek` | kW | `max(2,5 kW, maandpiek, streefpiek)` — waartegen marge en waarschuwingen gemeten worden |
-| `sensor.…_gemiddelde_piek_12_maanden` | kW | Voortschrijdend gemiddelde van 12 maandpieken (ontbrekende maanden = 2,5 kW) |
-| `sensor.…_capaciteitskost_deze_maand` | € | `maandpiek × tarief / 12` |
-| `sensor.…_capaciteitskost_per_jaar` | € | `gemiddelde 12 m × tarief` |
-| `binary_sensor.…_piek_in_gevaar` | – | Voorspelling > drempel % × doelpiek |
-| `binary_sensor.…_piek_wordt_gebroken` | – | Wiskundig zeker: zelfs bij 0 W de rest van het kwartier wordt de doelpiek overschreden |
-| `number.…_streefpiek` | kW | Optioneel doel voor deze maand (0 = geen). "Ik aanvaard tot 4 kW" ⇒ marge/waarschuwingen tegen 4 kW |
+| `sensor.…_pieklimiet_doel` | kW | `max(2,5 kW, maandpiek, gewenste pieklimiet)` |
+| `sensor.…_gemiddelde_maandpiek_12_maanden` | kW | Voortschrijdend gemiddelde van 12 maandpieken (ontbrekende maanden = 2,5 kW) |
+| `sensor.…_capaciteitstarief_kost_deze_maand` | € | `maandpiek × tarief / 12` |
+| `sensor.…_capaciteitstarief_kost_per_jaar` | € | `gemiddelde 12 m × tarief` |
+| `binary_sensor.…_maandpiek_in_gevaar` | – | Verwachting > drempel % × pieklimiet |
+| `binary_sensor.…_maandpiek_wordt_overschreden` | – | Wiskundig zeker: zelfs bij 0 W de rest van het kwartier wordt de pieklimiet overschreden |
+| `number.…_gewenste_pieklimiet` | kW | Optioneel doel voor deze maand (0 = geen). "Ik aanvaard tot 4 kW" ⇒ marge/waarschuwingen tegen 4 kW |
+
+> Bestaande installaties behouden hun oude entity-id's (alleen de getoonde namen veranderen); de id's hierboven gelden voor nieuwe installaties.
 
 ## Services
 
@@ -77,7 +91,7 @@ automation:
   - alias: Laadpaal pauzeren bij piekgevaar
     triggers:
       - trigger: state
-        entity_id: binary_sensor.capaciteitstarief_piek_in_gevaar
+        entity_id: binary_sensor.capaciteitstarief_maandpiek_in_gevaar
         to: "on"
     actions:
       - action: switch.turn_off
@@ -86,12 +100,12 @@ automation:
   - alias: Laadpaal hervatten met voldoende marge
     triggers:
       - trigger: numeric_state
-        entity_id: sensor.capaciteitstarief_kwartier_marge
+        entity_id: sensor.capaciteitstarief_nog_beschikbaar_vermogen_dit_kwartier
         above: 7500          # laadpaal trekt 7,4 kW
         for: "00:00:30"
     conditions:
       - condition: state
-        entity_id: binary_sensor.capaciteitstarief_piek_in_gevaar
+        entity_id: binary_sensor.capaciteitstarief_maandpiek_in_gevaar
         state: "off"
     actions:
       - action: switch.turn_on
@@ -101,7 +115,7 @@ automation:
 Vermogen van een boiler moduleren op de marge (template):
 
 ```yaml
-{{ [0, states('sensor.capaciteitstarief_kwartier_marge') | float(0) - 500] | max }}
+{{ [0, states('sensor.capaciteitstarief_nog_beschikbaar_vermogen_dit_kwartier') | float(0) - 500] | max }}
 ```
 
 ## Hoe het rekent

@@ -22,12 +22,14 @@
         "data": {
           "tariff_eur_per_kw_year": "Capaciteitstarief (€/kW/jaar)",
           "warning_threshold_pct": "Waarschuwingsdrempel (% van de doelpiek)",
-          "floor_kw": "Minimaal gefactureerde piek (kW)"
+          "floor_kw": "Minimaal gefactureerde piek (kW)",
+          "net_area": "Netgebied (Fluvius)"
         },
         "data_description": {
-          "tariff_eur_per_kw_year": "Zie je factuur van de netbeheerder (Fluvius). Leeg laten verbergt de kostsensoren.",
+          "tariff_eur_per_kw_year": "Optioneel, overschrijft de tabel. Zie je Fluvius-factuur. Leeg = tarief van het gekozen netgebied; zonder netgebied én zonder waarde blijven de kostsensoren onbekend.",
           "warning_threshold_pct": "'Piek in gevaar' gaat aan zodra de voorspelling voor dit kwartier boven dit percentage van de doelpiek komt.",
-          "floor_kw": "Fluvius factureert minstens 2,5 kW."
+          "floor_kw": "Fluvius factureert minstens 2,5 kW.",
+          "net_area": "Kies je netgebied (zie je Fluvius-factuur of postcode); dan wordt het ingebouwde tarief gebruikt (incl. 6% btw). Leeg laten als je het tarief zelf invult."
         }
       }
     },
@@ -46,7 +48,12 @@
           "energy_entities": "Energy import (kWh) – bv. HomeWizard 'Energy import' of 'Energy import tariff 1' + 'tariff 2'",
           "tariff_eur_per_kw_year": "Capaciteitstarief (€/kW/jaar)",
           "warning_threshold_pct": "Waarschuwingsdrempel (% van de doelpiek)",
-          "floor_kw": "Minimaal gefactureerde piek (kW)"
+          "floor_kw": "Minimaal gefactureerde piek (kW)",
+          "net_area": "Netgebied (Fluvius)"
+        },
+        "data_description": {
+          "net_area": "Kies je netgebied (zie je Fluvius-factuur of postcode); dan wordt het ingebouwde tarief gebruikt (incl. 6% btw). Leeg laten als je het tarief zelf invult.",
+          "tariff_eur_per_kw_year": "Optioneel, overschrijft de tabel. Zie je Fluvius-factuur. Leeg = tarief van het gekozen netgebied; zonder netgebied én zonder waarde blijven de kostsensoren onbekend."
         }
       }
     }

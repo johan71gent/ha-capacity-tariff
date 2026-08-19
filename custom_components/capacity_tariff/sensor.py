@@ -27,9 +27,12 @@ from .const import (
     ATTR_FLAGS,
     ATTR_GAP,
     ATTR_MONTH,
+    ATTR_NET_AREA,
     ATTR_REMAINING_S,
     ATTR_SOURCE,
     ATTR_TARIFF,
+    ATTR_TARIFF_SOURCE,
+    ATTR_TARIFF_YEAR,
     ATTR_TOP,
 )
 from .coordinator import CapacityData, CapacityTariffCoordinator
@@ -107,7 +110,13 @@ def _month_peak_attrs(data: CapacityData) -> dict[str, Any]:
 
 
 def _cost_attrs(data: CapacityData) -> dict[str, Any]:
-    return {ATTR_TARIFF: data.tariff, ATTR_AVERAGE_12M: round(data.average_12m_kw, 3)}
+    return {
+        ATTR_TARIFF: data.tariff,
+        ATTR_TARIFF_SOURCE: data.tariff_source,
+        ATTR_TARIFF_YEAR: data.tariff_year,
+        ATTR_NET_AREA: data.net_area,
+        ATTR_AVERAGE_12M: round(data.average_12m_kw, 3),
+    }
 
 
 SENSORS: tuple[CapacitySensorDescription, ...] = (

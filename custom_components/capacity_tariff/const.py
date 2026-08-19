@@ -22,6 +22,9 @@ CONF_ENERGY_ENTITIES = "energy_entities"
 
 # --- config entry options (settings) ------------------------------------------
 CONF_TARIFF = "tariff_eur_per_kw_year"
+CONF_NET_AREA = "net_area"
+"""Distribution area key (see core/tariffs.py); the built-in table supplies the tariff
+unless CONF_TARIFF is filled in manually."""
 CONF_WARNING_THRESHOLD = "warning_threshold_pct"
 CONF_FLOOR_KW = "floor_kw"
 CONF_GOAL_KW = "goal_kw"
@@ -46,4 +49,7 @@ ATTR_TOP = "top_quarters"
 ATTR_FLAGS = "flags"
 ATTR_GAP = "last_gap"
 ATTR_TARIFF = "tariff_eur_per_kw_year"
+ATTR_TARIFF_SOURCE = "tariff_source"
+ATTR_TARIFF_YEAR = "tariff_year"
+ATTR_NET_AREA = "net_area"
 ATTR_AVERAGE_12M = "average_peak_12m_kw"

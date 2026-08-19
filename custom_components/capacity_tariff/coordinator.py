@@ -27,6 +27,7 @@ from .const import (
     CONF_GOAL_KW,
     CONF_METER_AVERAGE_ENTITY,
     CONF_METER_PEAK_ENTITY,
+    CONF_NET_AREA,
     CONF_POWER_ENTITY,
     CONF_TARIFF,
     CONF_WARNING_THRESHOLD,
@@ -49,6 +50,7 @@ from .core import (
     month_cost,
     year_cost,
 )
+from .core.tariffs import lookup_tariff
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,6 +82,9 @@ class CapacityData:
     at_risk: bool
     certain_break: bool
     gap: Gap | None
+    tariff_source: str = "none"
+    tariff_year: int | None = None
+    net_area: str | None = None
 
     @property
     def target_w(self) -> float:
@@ -148,8 +153,19 @@ class CapacityTariffCoordinator(DataUpdateCoordinator[CapacityData]):
 
     @property
     def tariff(self) -> float | None:
+        """EUR/kW/year: manual value wins, else the built-in table for the chosen area."""
+        return self.tariff_info()[0]
+
+    def tariff_info(self) -> tuple[float | None, str, int | None, str | None]:
+        """(tariff, source, year_used, area) — source is 'manual', 'table' or 'none'."""
         value = self.entry.options.get(CONF_TARIFF)
-        return None if value in (None, "") else float(value)
+        if value not in (None, ""):
+            return float(value), "manual", None, None
+        area = self.entry.options.get(CONF_NET_AREA)
+        found = lookup_tariff(area, dt_util.now().year)
+        if found is None:
+            return None, "none", None, area or None
+        return found[0], "table", found[1], area
 
     @property
     def goal_kw(self) -> float | None:
@@ -339,7 +355,7 @@ class CapacityTariffCoordinator(DataUpdateCoordinator[CapacityData]):
         peak = self.ledger.month_peak(month_key)
         target_kw = effective_target_kw(peak.peak_kw, self.goal_kw, self.ledger.floor_kw)
         status = self.tracker.status(now)
-        tariff = self.tariff
+        tariff, tariff_source, tariff_year, net_area = self.tariff_info()
         avg12 = self.ledger.rolling_average(month_key)
         target_w = target_kw * 1000.0
         data = CapacityData(
@@ -352,6 +368,9 @@ class CapacityTariffCoordinator(DataUpdateCoordinator[CapacityData]):
             target_kw=target_kw,
             goal_kw=self.goal_kw,
             tariff=tariff,
+            tariff_source=tariff_source,
+            tariff_year=tariff_year,
+            net_area=net_area,
             month_cost=None if tariff is None else month_cost(peak.peak_kw, tariff),
             year_cost=None if tariff is None else year_cost(avg12, tariff),
             threshold=self.threshold,

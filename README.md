@@ -36,7 +36,26 @@ Daarna: *Instellingen → Apparaten & diensten → Integratie toevoegen → "Cap
 | Meter: piek van de lopende maand | aanbevolen | DSMR *Maximum demand current month* / HomeWizard *Peak demand current month* — OBIS 1-0:1.6.0. Wordt de officiële maandpiek. |
 | Importtellers (kWh) | fallback | Eén of meer cumulatieve importregisters (1.8.1 + 1.8.2 mogen apart; ze worden opgeteld). Gebruikt als de meterwaarden er niet zijn. |
 
-**Stap 2 – tarief en drempels:** capaciteitstarief in €/kW/jaar (zie je Fluvius-factuur; leeg = geen kostsensoren), waarschuwingsdrempel in % van de doelpiek (default 90), minimaal gefactureerde piek (default 2,5 kW). Alles is later aanpasbaar via *Configureren*.
+**Stap 2 – tarief en drempels:**
+
+- **Netgebied (Fluvius)**: kies je gebied en de integratie gebruikt het ingebouwde capaciteitstarief (officiële VREG-tarieflijst, incl. 6 % btw zoals op je factuur). Geen API nodig; de tabel wordt jaarlijks bijgewerkt in een release.
+- **Capaciteitstarief (€/kW/jaar)**: optioneel, overschrijft de tabel (zie je Fluvius-factuur). Zonder netgebied én zonder waarde blijven de kostsensoren *onbekend*.
+- Waarschuwingsdrempel in % van de pieklimiet (default 90), minimaal gefactureerde piek (default 2,5 kW).
+
+Alles is later aanpasbaar via *Configureren*.
+
+| Netgebied | 2026, excl. btw | incl. 6 % btw |
+|---|---|---|
+| Fluvius Antwerpen | 49,40 | 52,37 |
+| Fluvius Halle-Vilvoorde | 56,04 | 59,41 |
+| Fluvius Imewo | 54,20 | 57,45 |
+| Fluvius Kempen | 56,21 | 59,58 |
+| Fluvius Limburg | 49,05 | 51,99 |
+| Fluvius Midden-Vlaanderen | 50,12 | 53,13 |
+| Fluvius West | 57,10 | 60,53 |
+| Fluvius Zenne-Dijle | 56,12 | 59,49 |
+
+Bron: [Vlaamse Nutsregulator – distributienettarieven](https://www.vlaamsenutsregulator.be/elektriciteit-en-aardgas/nettarieven/hoeveel-bedragen-de-distributienettarieven), rij *Gemiddelde maandpiek (laagspanning met piekmeting)*. De kostsensoren tonen in hun attributen welk tarief gebruikt wordt (`tariff_source`: `manual` of `table`, `tariff_year`, `net_area`).
 
 Bronvoorrang per grootheid: **meter-eigen sensor › kWh-register › tijdgewogen vermogen**.
 

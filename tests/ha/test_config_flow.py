@@ -102,5 +102,5 @@ async def test_options_flow_updates_sources_and_settings(hass: HomeAssistant, mo
     assert mock_entry.data == {CONF_POWER_ENTITY: POWER, CONF_METER_AVERAGE_ENTITY: METER_AVG}
     assert mock_entry.options == {CONF_TARIFF: 52.0, CONF_WARNING_THRESHOLD: 80, CONF_FLOOR_KW: 2.5}
     # reloaded with the new tariff
-    state = hass.states.get("sensor.capaciteitstarief_capacity_cost_per_year")
+    state = hass.states.get("sensor.capaciteitstarief_capacity_tariff_cost_per_year")
     assert float(state.state) == 2.5 * 52.0

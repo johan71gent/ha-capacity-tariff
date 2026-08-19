@@ -16,13 +16,13 @@ from custom_components.capacity_tariff.diagnostics import async_get_config_entry
 from .conftest import set_power
 
 T0 = "2026-08-18T12:00:00+00:00"
-AT_RISK = "binary_sensor.capaciteitstarief_peak_at_risk"
-EXCEEDED = "binary_sensor.capaciteitstarief_peak_will_be_exceeded"
-GOAL = "number.capaciteitstarief_goal_peak"
-TARGET = "sensor.capaciteitstarief_target_peak"
-MARGIN = "sensor.capaciteitstarief_quarter_margin"
-PEAK = "sensor.capaciteitstarief_month_peak"
-AVG12 = "sensor.capaciteitstarief_average_peak_12_months"
+AT_RISK = "binary_sensor.capaciteitstarief_peak_demand_at_risk"
+EXCEEDED = "binary_sensor.capaciteitstarief_peak_demand_will_be_exceeded"
+GOAL = "number.capaciteitstarief_desired_peak_limit"
+TARGET = "sensor.capaciteitstarief_peak_limit_target"
+MARGIN = "sensor.capaciteitstarief_power_still_available_this_quarter"
+PEAK = "sensor.capaciteitstarief_peak_demand_current_month"
+AVG12 = "sensor.capaciteitstarief_average_peak_demand_12_months"
 
 
 async def _setup(hass, entry):

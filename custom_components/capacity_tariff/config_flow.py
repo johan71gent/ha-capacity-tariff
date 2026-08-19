@@ -19,6 +19,10 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
 )
 
 from .const import (
@@ -26,6 +30,7 @@ from .const import (
     CONF_FLOOR_KW,
     CONF_METER_AVERAGE_ENTITY,
     CONF_METER_PEAK_ENTITY,
+    CONF_NET_AREA,
     CONF_POWER_ENTITY,
     CONF_TARIFF,
     CONF_WARNING_THRESHOLD,
@@ -33,6 +38,7 @@ from .const import (
     DEFAULT_WARNING_THRESHOLD,
     DOMAIN,
 )
+from .core.tariffs import NET_AREAS
 
 SOURCE_KEYS = (
     CONF_POWER_ENTITY,
@@ -40,7 +46,7 @@ SOURCE_KEYS = (
     CONF_METER_PEAK_ENTITY,
     CONF_ENERGY_ENTITIES,
 )
-SETTING_KEYS = (CONF_TARIFF, CONF_WARNING_THRESHOLD, CONF_FLOOR_KW)
+SETTING_KEYS = (CONF_NET_AREA, CONF_TARIFF, CONF_WARNING_THRESHOLD, CONF_FLOOR_KW)
 
 
 def _sources_schema() -> vol.Schema:
@@ -67,6 +73,14 @@ def _sources_schema() -> vol.Schema:
 def _settings_schema() -> vol.Schema:
     return vol.Schema(
         {
+            vol.Optional(CONF_NET_AREA): SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        SelectOptionDict(value=key, label=label) for key, label in NET_AREAS.items()
+                    ],
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            ),
             vol.Optional(CONF_TARIFF): NumberSelector(
                 NumberSelectorConfig(
                     min=0,

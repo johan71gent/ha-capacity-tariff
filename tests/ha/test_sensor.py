@@ -9,9 +9,12 @@ from pytest_homeassistant_custom_component.common import async_fire_time_changed
 
 from custom_components.capacity_tariff.const import (
     CONF_ENERGY_ENTITIES,
+    CONF_FLOOR_KW,
     CONF_METER_AVERAGE_ENTITY,
     CONF_METER_PEAK_ENTITY,
+    CONF_NET_AREA,
     CONF_POWER_ENTITY,
+    CONF_WARNING_THRESHOLD,
     DOMAIN,
 )
 
@@ -30,16 +33,16 @@ from .conftest import (
 T0 = "2026-08-18T12:00:00+00:00"  # 14:00 Brussels, start of a quarter
 
 E = {
-    "running": "sensor.capaciteitstarief_running_quarter_average",
-    "prediction": "sensor.capaciteitstarief_quarter_prediction",
-    "margin": "sensor.capaciteitstarief_quarter_margin",
-    "last": "sensor.capaciteitstarief_last_quarter",
-    "peak": "sensor.capaciteitstarief_month_peak",
-    "peak_time": "sensor.capaciteitstarief_month_peak_time",
-    "target": "sensor.capaciteitstarief_target_peak",
-    "avg12": "sensor.capaciteitstarief_average_peak_12_months",
-    "cost_month": "sensor.capaciteitstarief_capacity_cost_this_month",
-    "cost_year": "sensor.capaciteitstarief_capacity_cost_per_year",
+    "running": "sensor.capaciteitstarief_average_demand_running_quarter",
+    "prediction": "sensor.capaciteitstarief_average_demand_forecast_end_of_quarter",
+    "margin": "sensor.capaciteitstarief_power_still_available_this_quarter",
+    "last": "sensor.capaciteitstarief_average_demand_last_quarter",
+    "peak": "sensor.capaciteitstarief_peak_demand_current_month",
+    "peak_time": "sensor.capaciteitstarief_peak_demand_current_month_time",
+    "target": "sensor.capaciteitstarief_peak_limit_target",
+    "avg12": "sensor.capaciteitstarief_average_peak_demand_12_months",
+    "cost_month": "sensor.capaciteitstarief_capacity_tariff_cost_this_month",
+    "cost_year": "sensor.capaciteitstarief_capacity_tariff_cost_per_year",
 }
 
 
@@ -213,3 +216,24 @@ async def test_unavailable_source_is_ignored(hass: HomeAssistant, freezer, mock_
     await hass.async_block_till_done()
     await _advance(hass, freezer, 60)
     assert hass.states.get(E["running"]).state not in ("unknown", "unavailable")
+
+
+@pytest.mark.parametrize(
+    "entry_options",
+    [{CONF_NET_AREA: "fluvius_imewo", CONF_WARNING_THRESHOLD: 90, CONF_FLOOR_KW: 2.5}],
+)
+async def test_tariff_from_builtin_table_when_no_manual_value(
+    hass: HomeAssistant, freezer, mock_entry
+):
+    """No manual tariff but a distribution area -> cost sensors use the built-in table."""
+    freezer.move_to(T0)
+    set_power(hass, 1000)
+    await _setup(hass, mock_entry)
+
+    state = hass.states.get(E["cost_year"])
+    assert state.state not in ("unknown", "unavailable")
+    tariff = state.attributes["tariff_eur_per_kw_year"]
+    assert state.attributes["tariff_source"] == "table"
+    assert state.attributes["net_area"] == "fluvius_imewo"
+    assert tariff == pytest.approx(54.2009816 * 1.06, rel=1e-4)
+    assert _f(hass, "cost_year") == pytest.approx(2.5 * tariff)
